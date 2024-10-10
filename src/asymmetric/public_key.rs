@@ -1,10 +1,12 @@
 //! Public keys for use with asymmetric cryptography / signatures
 
 use crate::{asymmetric, ecdsa::algorithm::CurveAlgorithm, ed25519};
-use ::ecdsa::elliptic_curve::{
-    bigint::Integer, generic_array::GenericArray, point::PointCompression, sec1, FieldBytesSize,
+use ecdsa::elliptic_curve::{
+    point::PointCompression, sec1, FieldBytesSize,
     PrimeCurve,
 };
+use crypto_bigint::Bounded;
+use hybrid_array::Array;
 use num_traits::FromPrimitive;
 use rsa::{BigUint, RsaPublicKey};
 use serde::{Deserialize, Serialize};
@@ -50,14 +52,14 @@ impl PublicKey {
     /// Return the ECDSA public key of the given curve type if applicable
     pub fn ecdsa<C>(&self) -> Option<sec1::EncodedPoint<C>>
     where
-        C: PrimeCurve + CurveAlgorithm + PointCompression,
+        C: PrimeCurve + CurveAlgorithm + PointCompression + ecdsa::EcdsaCurve,
         FieldBytesSize<C>: sec1::ModulusSize,
     {
         if self.algorithm != C::asymmetric_algorithm() || self.bytes.len() != C::Uint::BYTES * 2 {
             return None;
         }
 
-        let mut bytes = GenericArray::default();
+        let mut bytes = Array::default();
         bytes.copy_from_slice(&self.bytes);
         let result = sec1::EncodedPoint::<C>::from_untagged_bytes(&bytes);
 

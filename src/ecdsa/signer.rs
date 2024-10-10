@@ -8,7 +8,6 @@ use ecdsa::{
     der,
     elliptic_curve::{
         consts::{U32, U48},
-        generic_array::ArrayLength,
         point::PointCompression,
         sec1::{self, FromEncodedPoint, ToEncodedPoint},
         AffinePoint, CurveArithmetic, FieldBytesSize, PrimeCurve,
@@ -16,9 +15,10 @@ use ecdsa::{
     hazmat::DigestPrimitive,
     Signature, SignatureSize, VerifyingKey,
 };
+use hybrid_array::ArraySize;
 use signature::{digest::Digest, hazmat::PrehashSigner, DigestSigner, Error, KeypairRef};
 use spki::{
-    der::AnyRef, AlgorithmIdentifier, AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
+    der::AnyRef, AlgorithmIdentifier,  AssociatedAlgorithmIdentifier, SignatureAlgorithmIdentifier,
 };
 use std::ops::Add;
 
@@ -29,7 +29,7 @@ use super::{secp256k1::RecoveryId, Secp256k1};
 #[derive(signature::Signer)]
 pub struct Signer<C>
 where
-    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve,
+    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve + ecdsa::EcdsaCurve,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     /// YubiHSM client.
@@ -48,7 +48,7 @@ where
 
 impl<C> Signer<C>
 where
-    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve,
+    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve + ecdsa::EcdsaCurve,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -77,11 +77,11 @@ where
 
 impl<C> Signer<C>
 where
-    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve,
+    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve + ecdsa::EcdsaCurve,
     FieldBytesSize<C>: sec1::ModulusSize,
-    SignatureSize<C>: ArrayLength<u8>,
-    der::MaxSize<C>: ArrayLength<u8>,
-    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
+    der::MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
 {
     fn sign_prehash_ecdsa(&self, prehash: &[u8]) -> Result<Signature<C>, Error> {
         self.client
@@ -93,7 +93,7 @@ where
 
 impl<C> AsRef<VerifyingKey<C>> for Signer<C>
 where
-    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve,
+    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve + ecdsa::EcdsaCurve,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
     fn as_ref(&self) -> &VerifyingKey<C> {
@@ -104,7 +104,7 @@ where
 impl<C> From<&Signer<C>> for sec1::EncodedPoint<C>
 where
     Self: Clone,
-    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve,
+    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve + ecdsa::EcdsaCurve,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
 {
@@ -115,9 +115,9 @@ where
 
 impl<C> KeypairRef for Signer<C>
 where
-    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve,
+    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve + ecdsa::EcdsaCurve,
     FieldBytesSize<C>: sec1::ModulusSize,
-    SignatureSize<C>: ArrayLength<u8>,
+    SignatureSize<C>: ArraySize,
 {
     type VerifyingKey = VerifyingKey<C>;
 }
@@ -203,11 +203,11 @@ where
 
 impl<C> DigestSigner<C::Digest, der::Signature<C>> for Signer<C>
 where
-    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve + DigestPrimitive,
+    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve + DigestPrimitive + ecdsa::EcdsaCurve,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
-    der::MaxSize<C>: ArrayLength<u8>,
-    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArrayLength<u8>,
+    der::MaxSize<C>: ArraySize,
+    <FieldBytesSize<C> as Add>::Output: Add<der::MaxOverhead> + ArraySize,
     Self: DigestSigner<C::Digest, Signature<C>>,
 {
     fn try_sign_digest(&self, digest: C::Digest) -> Result<der::Signature<C>, Error> {
@@ -217,7 +217,7 @@ where
 
 impl<C> SignatureAlgorithmIdentifier for Signer<C>
 where
-    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve,
+    C: CurveAlgorithm + CurveArithmetic + PointCompression + PrimeCurve + ecdsa::EcdsaCurve,
     AffinePoint<C>: FromEncodedPoint<C> + ToEncodedPoint<C>,
     FieldBytesSize<C>: sec1::ModulusSize,
     Signature<C>: AssociatedAlgorithmIdentifier<Params = AnyRef<'static>>,

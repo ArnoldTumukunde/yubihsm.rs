@@ -52,7 +52,7 @@ impl Mac {
 
 impl ConstantTimeEq for Mac {
     fn ct_eq(&self, other: &Self) -> Choice {
-        self.0.as_ref().ct_eq(other.0.as_ref())
+        self.0.ct_eq(other.0.as_ref())
     }
 }
 

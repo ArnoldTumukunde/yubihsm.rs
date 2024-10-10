@@ -10,7 +10,7 @@ use std::marker::PhantomData;
 /// RSA signature provider for yubihsm-client
 pub struct Signer<S>
 where
-    S: SignatureAlgorithm,
+    S: SignatureAlgorithm + signature::digest::HashMarker + Default + signature::digest::FixedOutput,
 {
     /// YubiHSM client.
     client: Client,
@@ -27,7 +27,7 @@ where
 
 impl<S> Signer<S>
 where
-    S: SignatureAlgorithm,
+    S: SignatureAlgorithm + signature::digest::HashMarker + signature::digest::FixedOutput + Default,
 {
     /// Create a new YubiHSM-backed RSA-PSS signer
     pub fn create(client: Client, signing_key_id: object::Id) -> Result<Self, Error> {
@@ -60,7 +60,7 @@ where
 
 impl<S> signature::Signer<Signature> for Signer<S>
 where
-    S: SignatureAlgorithm,
+    S: SignatureAlgorithm + signature::digest::HashMarker + signature::digest::FixedOutput + Default,
 {
     fn try_sign(&self, msg: &[u8]) -> Result<Signature, Error> {
         self.client
@@ -72,7 +72,7 @@ where
 
 impl<S> signature::Keypair for Signer<S>
 where
-    S: SignatureAlgorithm,
+    S: SignatureAlgorithm + signature::digest::HashMarker + signature::digest::FixedOutput + Default,
 {
     type VerifyingKey = VerifyingKey<S>;
 
@@ -83,7 +83,7 @@ where
 
 impl<S> DynSignatureAlgorithmIdentifier for Signer<S>
 where
-    S: SignatureAlgorithm + AssociatedOid,
+    S: SignatureAlgorithm + AssociatedOid + signature::digest::HashMarker + signature::digest::FixedOutput + Default,
 {
     fn signature_algorithm_identifier(&self) -> spki::Result<AlgorithmIdentifierOwned> {
         get_default_pss_signature_algo_id::<S>()
